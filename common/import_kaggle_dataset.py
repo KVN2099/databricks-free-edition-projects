@@ -11,6 +11,7 @@ Delta table using an existing SparkSession.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Dict, Iterable, Optional, TYPE_CHECKING
 
 import kagglehub
@@ -57,6 +58,7 @@ class KaggleDatasetImporter:
         columns_to_drop: Optional[Iterable[str]] = ("Unnamed: 6",),
         sql_query: Optional[str] = None,
         pandas_kwargs: Optional[Dict[str, Any]] = None,
+        sanitize_column_names: bool = True,
     ) -> "DataFrame":
         """Load a Kaggle dataset to pandas, convert to Spark, and save as Delta.
 
@@ -70,6 +72,10 @@ class KaggleDatasetImporter:
                 unnamed index column appears.
             sql_query: Optional SQL query if the adapter supports it.
             pandas_kwargs: Optional extra kwargs forwarded to pandas loader.
+            sanitize_column_names: When True (default), invalid characters in
+                column names are replaced by underscores, whitespace collapsed,
+                names lowercased, leading digits prefixed by an underscore, and
+                duplicates disambiguated with numeric suffixes.
 
         Returns:
             The Spark DataFrame that was written.
@@ -87,6 +93,9 @@ class KaggleDatasetImporter:
 
         # Convert pandas DataFrame to Spark DataFrame
         df = self.spark.createDataFrame(pdf)
+
+        if sanitize_column_names:
+            df = self._sanitize_df_columns(df)
 
         if columns_to_drop:
             present = [c for c in columns_to_drop if c in df.columns]
@@ -109,6 +118,55 @@ class KaggleDatasetImporter:
                     exc,
                 )
 
+        return df
+
+    # --- helpers -----------------------------------------------------------------
+    def _sanitize_df_columns(self, df: "DataFrame") -> "DataFrame":
+        """Return a new DataFrame with sanitized, Delta-safe column names.
+
+        Rules:
+        - Lowercase names
+        - Replace any character not in [A-Za-z0-9_] with an underscore
+        - Collapse consecutive underscores
+        - Strip leading/trailing underscores
+        - If name starts with a digit, prefix with an underscore
+        - Ensure uniqueness by appending _2, _3, ... when needed
+        """
+        original_columns = df.columns
+
+        def sanitize(name: str) -> str:
+            # Normalize whitespace and case
+            candidate = name.strip().lower()
+            # Replace invalid characters with underscore (spaces, %, punctuation, etc.)
+            candidate = re.sub(r"[^a-z0-9_]", "_", candidate)
+            # Collapse repeated underscores
+            candidate = re.sub(r"_+", "_", candidate)
+            # Trim underscores at ends
+            candidate = candidate.strip("_")
+            # If empty after sanitization, fall back to placeholder
+            if not candidate:
+                candidate = "col"
+            # If starts with digit, prefix underscore
+            if candidate[0].isdigit():
+                candidate = f"_{candidate}"
+            return candidate
+
+        sanitized = [sanitize(c) for c in original_columns]
+
+        # Deduplicate while preserving order
+        seen: Dict[str, int] = {}
+        unique: list[str] = []
+        for name in sanitized:
+            if name not in seen:
+                seen[name] = 1
+                unique.append(name)
+            else:
+                seen[name] += 1
+                unique.append(f"{name}_{seen[name]}")
+
+        if unique != original_columns:
+            logger.debug("Renaming columns: %s -> %s", original_columns, unique)
+            df = df.toDF(*unique)
         return df
 
 
