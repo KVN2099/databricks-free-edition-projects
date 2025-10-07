@@ -59,6 +59,7 @@ class KaggleDatasetImporter:
         sql_query: Optional[str] = None,
         pandas_kwargs: Optional[Dict[str, Any]] = None,
         sanitize_column_names: bool = True,
+        column_mapping_mode: Optional[str] = "name",
     ) -> "DataFrame":
         """Load a Kaggle dataset to pandas, convert to Spark, and save as Delta.
 
@@ -76,6 +77,10 @@ class KaggleDatasetImporter:
                 column names are replaced by underscores, whitespace collapsed,
                 names lowercased, leading digits prefixed by an underscore, and
                 duplicates disambiguated with numeric suffixes.
+            column_mapping_mode: When set to "name" (default) or "id",
+                enables Delta column mapping to allow special characters in
+                column names and robust schema evolution. Set to None to
+                disable.
 
         Returns:
             The Spark DataFrame that was written.
@@ -102,8 +107,22 @@ class KaggleDatasetImporter:
             if present:
                 df = df.drop(*present)
 
-        # Write to Delta table
-        df.write.format("delta").mode(mode).saveAsTable(table_name)
+        # Write to Delta table with optional Column Mapping enabled
+        writer = df.write.format("delta").mode(mode)
+        if column_mapping_mode is not None:
+            if column_mapping_mode not in {"name", "id"}:
+                raise ValueError(
+                    "column_mapping_mode must be one of {'name', 'id'} or None"
+                )
+            writer = writer.option("delta.columnMapping.mode", column_mapping_mode)
+            # Set required min reader/writer versions per Delta Lake docs
+            writer = writer.option("delta.minReaderVersion", "2")
+            if column_mapping_mode == "name":
+                writer = writer.option("delta.minWriterVersion", "5")
+            else:  # id mapping requires a newer writer version
+                writer = writer.option("delta.minWriterVersion", "7")
+
+        writer.saveAsTable(table_name)
 
         # Optionally enable Change Data Feed on the target table
         if self.enable_change_data_feed:
@@ -114,6 +133,23 @@ class KaggleDatasetImporter:
             except Exception as exc:  # noqa: BLE001 - log and continue since CDF might be already enabled/unsupported
                 logger.debug(
                     "Could not enable Change Data Feed for table %s: %s",
+                    table_name,
+                    exc,
+                )
+
+        # Ensure Column Mapping table properties are present (robustness)
+        if column_mapping_mode is not None:
+            try:
+                self.spark.sql(
+                    f"ALTER TABLE {table_name} SET TBLPROPERTIES ("
+                    f"delta.columnMapping.mode = '{column_mapping_mode}', "
+                    f"delta.minReaderVersion = 2, "
+                    f"delta.minWriterVersion = {5 if column_mapping_mode == 'name' else 7}"
+                    ")"
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(
+                    "Could not set Column Mapping properties for table %s: %s",
                     table_name,
                     exc,
                 )
