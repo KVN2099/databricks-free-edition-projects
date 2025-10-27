@@ -1,0 +1,4 @@
+keras
+tensorflow
+numpy>=1.21.6,<1.28.0
+mlflow==3.5.0
