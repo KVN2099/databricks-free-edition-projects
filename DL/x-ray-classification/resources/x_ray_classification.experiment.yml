@@ -5,4 +5,4 @@ resources:
       permissions:
         - level: CAN_MANAGE
           user_name: ${workspace.current_user.userName}
-      artifact_location: dbfs:/Volumes/${var.catalog}/${var.schema}/${var.volume}/x-ray-classification-artifacts/
+      artifact_location: dbfs:/Volumes/${var.catalog}/${resources.schemas.x_ray_schema.name}/${resources.volumes.x-ray-volume.name}/x-ray-classification-artifacts/
