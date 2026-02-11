@@ -1,0 +1,2 @@
+databricks-feature-engineering==0.14.0
+tensorflow[and-cuda]==2.20.0
