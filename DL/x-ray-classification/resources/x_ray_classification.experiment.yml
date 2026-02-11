@@ -1,7 +1,7 @@
 resources:
   experiments:
     x-ray-classification:
-      name: /Workspace/Users/${workspace.current_user.userName}/Personal/.bundle/${bundle.name}/experiment
+      name: /Workspace/Users/${workspace.current_user.userName}/Personal/.bundle/${bundle.name}/${var.experiment}
       permissions:
         - level: CAN_MANAGE
           user_name: ${workspace.current_user.userName}

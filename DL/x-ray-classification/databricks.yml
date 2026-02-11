@@ -17,6 +17,9 @@ variables:
   volume:
     description: 'Volume to save x-ray data into'
     default: kaggle
+  experiment:
+    description: 'MLflow experiment to save model info'
+    default: x-ray-experiment
 
 targets:
   dev:

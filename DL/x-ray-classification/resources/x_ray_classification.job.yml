@@ -52,11 +52,13 @@ resources:
         - name: CATALOG
           default: ${var.catalog}
         - name: SCHEMA
-          default: ${var.schema}
+          default: ${resources.schemas.x_ray_schema.name}
         - name: VOLUME
-          default: ${var.volume}
+          default: ${resources.volumes.x-ray-volume.name}
         - name: TABLE
           default: ${var.table}
+        - name: EXPERIMENT
+          default: ${resources.experiments.x-ray-classification.name}
       email_notifications:
         no_alert_for_skipped_runs: false
       environments:
