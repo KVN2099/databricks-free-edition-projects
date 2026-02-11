@@ -1,0 +1,28 @@
+bundle:
+  name: x-ray-classification 
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: 'Unity Catalog catalog'
+  schema:
+    description: 'Unity Catalog schema'
+  table:
+    description: 'Table to save classification into'
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      root_path: /Workspace/Users/kevin.romero@databricks.com/Personal/.bundle/${bundle.name}/${bundle.target}
+  prod:
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      root_path: /Workspace/Users/kevin.romero@databricks.com/Personal/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: kevin.romero@databricks.com
+        level: CAN_MANAGE
