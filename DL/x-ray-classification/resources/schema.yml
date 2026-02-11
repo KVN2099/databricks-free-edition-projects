@@ -1,6 +1,6 @@
 resources:
   schemas:
     x_ray_schema:
-      name: x-ray-schema
+      name: ${var.schema}
       catalog_name: ${var.catalog}
       comment: Schema to store all x-ray classification assets.

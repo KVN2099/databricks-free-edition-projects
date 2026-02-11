@@ -20,7 +20,7 @@ resources:
           email_notifications: {}
           environment_key: x-ray-dependencies
           notebook_task:
-            notebook_path: DL/x-ray-classification/src/2. EDA and Preprocessing
+            notebook_path: DL/x-ray-classification/src/2. EDA
             source: GIT
           run_if: ALL_SUCCESS
           timeout_seconds: 0
@@ -50,20 +50,21 @@ resources:
           timeout_seconds: 0
       parameters:
         - name: CATALOG
-          default: users
+          default: ${var.catalog}
         - name: SCHEMA
-          default: kevin_romero
+          default: ${var.schema}
         - name: VOLUME
-          default: kaggle
+          default: ${var.volume}
         - name: TABLE
-          default: chest_xray_cleaned
+          default: ${var.table}
       email_notifications:
         no_alert_for_skipped_runs: false
       environments:
         - environment_key: x-ray-dependencies
           spec:
             dependencies:
-              - https://github.com/KVN2099/databricks-free-edition-projects/blob/main/DL/x-ray-classification/requirements.txt
+              - databricks-feature-engineering==0.14.0
+              - tensorflow[and-cuda]==2.20.0
             environment_version: "4"
       git_source:
         git_branch: main
