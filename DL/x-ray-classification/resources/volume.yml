@@ -1,0 +1,8 @@
+resources:
+  volumes:
+    x-ray-volume:
+      catalog_name: ${var.catalog}
+      comment: Volume to download x-ray data to.
+      name: x_ray_volume
+      schema_name: ${resources.schemas.x_ray_schema.name}
+      volume_type: MANAGED

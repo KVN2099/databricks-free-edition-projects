@@ -1,0 +1,77 @@
+resources:
+  jobs:
+    x_ray_classification:
+      name: X-Ray Classification
+      tasks:
+        - task_key: Load_X-Ray_Data
+          disabled: false
+          email_notifications: {}
+          environment_key: x-ray-dependencies
+          notebook_task:
+            notebook_path: DL/x-ray-classification/src/1. Load data to UC
+            source: GIT
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: Exploratory_Data_Analysis
+          depends_on:
+            - task_key: Load_X-Ray_Data
+          disabled: false
+          email_notifications: {}
+          environment_key: x-ray-dependencies
+          notebook_task:
+            notebook_path: DL/x-ray-classification/src/2. EDA and Preprocessing
+            source: GIT
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: Preprocessing
+          depends_on:
+            - task_key: Exploratory_Data_Analysis
+          disabled: false
+          email_notifications: {}
+          environment_key: x-ray-dependencies
+          notebook_task:
+            notebook_path: DL/x-ray-classification/src/3. Preprocessing
+            source: GIT
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: Training
+          depends_on:
+            - task_key: Preprocessing
+          disabled: false
+          email_notifications: {}
+          environment_key: x-ray-dependencies
+          notebook_task:
+            notebook_path: DL/x-ray-classification/src/4. Neural Network Training
+            source: GIT
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+      parameters:
+        - name: CATALOG
+          default: users
+        - name: SCHEMA
+          default: kevin_romero
+        - name: VOLUME
+          default: kaggle
+        - name: TABLE
+          default: chest_xray_cleaned
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      environments:
+        - environment_key: x-ray-dependencies
+          spec:
+            dependencies:
+              - https://github.com/KVN2099/databricks-free-edition-projects/blob/main/DL/x-ray-classification/requirements.txt
+            environment_version: "4"
+      git_source:
+        git_branch: main
+        git_provider: gitHub
+        git_url: https://github.com/KVN2099/databricks-free-edition-projects
+      max_concurrent_runs: 1
+      performance_target: PERFORMANCE_OPTIMIZED
+      queue:
+        enabled: true
+      timeout_seconds: 0
+      webhook_notifications: {}

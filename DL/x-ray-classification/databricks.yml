@@ -7,10 +7,16 @@ include:
 variables:
   catalog:
     description: 'Unity Catalog catalog'
+    default: users
   schema:
     description: 'Unity Catalog schema'
+    default: kevin_romero
   table:
     description: 'Table to save classification into'
+    default: chest_xray_cleaned
+  volume:
+    description: 'Volume to save x-ray data into'
+    default: kaggle
 
 targets:
   dev:
