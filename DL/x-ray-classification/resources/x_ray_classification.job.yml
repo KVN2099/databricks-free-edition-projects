@@ -42,7 +42,6 @@ resources:
             - task_key: Preprocessing
           disabled: false
           email_notifications: {}
-          environment_key: x-ray-dependencies
           notebook_task:
             notebook_path: DL/x-ray-classification/src/4. Neural Network Training
             source: GIT
