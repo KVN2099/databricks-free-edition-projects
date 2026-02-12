@@ -58,7 +58,7 @@ resources:
         - name: TABLE
           default: ${var.table}
         - name: EXPERIMENT
-          default: ${resources.experiments.x-ray-classification.name}
+          default: ${var.experiment}
       email_notifications:
         no_alert_for_skipped_runs: false
       environments:
@@ -66,7 +66,7 @@ resources:
           spec:
             dependencies:
               - databricks-feature-engineering==0.14.0
-              - tensorflow[and-cuda]==2.20.0
+              - torch==2.10.0
             environment_version: "4"
       git_source:
         git_branch: main
